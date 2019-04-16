@@ -65,14 +65,66 @@ Since we have defined that we will be using a "es" service in the docker-compose
 ```
 awslocal es create-elasticsearch-domain --domain-name workspace
 ```
-You will see a json output with the created DomainStatus: {}.
+You will see a json output with the created DomainStatus: {}.  In this json response,  you can use the Endpoint value to hit ES. "Endpoint": "http://localhost:4571".
 
 If you refresh the web url. http://localhost:8080/#/infra
 You will see the Elasticsearch workspace.
 
-### Upload a document into Elasticsearch domain for indexing
+### Create a document json file called 26000001_1400000001
+```json
+{
+   "propertys":[
+      {
+         "lotInUnregisteredPlan": "Lot number 2",
+         "lvReportAddress": "222 Bourke St, Melbourne VIC 3000",
+         "landIdentifier":"333/885",
+         "id":124,
+         "address":"223 Bourke St, Melbourne VIC 3000"
+      },
+      {
+         "lotInUnregisteredPlan": "Lot number 1",
+         "lvReportAddress": "111 Bourke St, Melbourne VIC 3000",
+         "landIdentifier":"222/885",
+         "id":123,
+         "address":"112 Bourke St, Melbourne VIC 3000"
+      }
+   ],
+   "participant":{
+      "status":"ACTIVE",
+      "role":"Role1",
+      "id":123,
+      "reference":"MY Reference",
+      "subscriberId":1111
+   },
+   "workspace":{
+      "status":"IN_PREPARATION",
+      "jurisdiction":"VIC",
+      "number":"no-20001",
+      "workgroups":[
+         123,
+         456,
+         678
+      ],
+      "id":20001
+   },
+   "parties":[
+      {
+         "id":111,
+         "name":"Pary 1"
+      },
+      {
+         "id":112,
+         "name":"Party 2"
+      }
+   ]
+}
+```
 
-
+### Upload the document into Elasticsearch domain for indexing
+Upload a document with id 26000001_1400000001 into workspace domain under doc.
+```
+curl -v -X POST -H "Content-Type: application/json" -d @26000001_1400000001.json http://localhost:4571/workspace/doc/26000001_1400000001
+```
 
 ### References
 https://lobster1234.github.io/2017/04/05/working-with-localstack-command-line/
