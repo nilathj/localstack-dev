@@ -92,7 +92,7 @@ You will see the Elasticsearch workspace.
    "participant":{
       "status":"ACTIVE",
       "role":"Role1",
-      "id":123,
+      "id":1400000001,
       "reference":"MY Reference",
       "subscriberId":1111
    },
@@ -105,7 +105,7 @@ You will see the Elasticsearch workspace.
          456,
          678
       ],
-      "id":20001
+      "id":26000001
    },
    "parties":[
       {
@@ -125,6 +125,13 @@ Upload a document with id 26000001_1400000001 into workspace domain under doc.
 ```
 curl -v -X POST -H "Content-Type: application/json" -d @26000001_1400000001.json http://localhost:4571/workspace/doc/26000001_1400000001
 ```
+
+### See the document is in the ES index.
+You should see the newly added document.
+```
+http://localhost:4571/workspace/
+```
+
 
 ### References
 https://lobster1234.github.io/2017/04/05/working-with-localstack-command-line/
