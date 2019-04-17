@@ -19,40 +19,28 @@ https://docs.docker.com/compose/install/
 https://github.com/localstack/awscli-local
 This is a handy tool that will let you use awslocal directly to hit the local instance rather than having to specify --endpoint local urls.
 
-### Create a new directory for your project and a docker-compose.yml file in it.  
-This yml file defines your infrastructure services that you want to build locally.  In this excersise, I'm going to build and Elasticsearch instance.
+### Create a new directory for your project and start localstack using docker.  
+You can define the AWS services that you want started when docker localstack starts up.  In this excersise, I'm going to build and Elasticsearch instance, with a lambda for searching.  The lambda requires the creation of an IAM role and I'm going to use the API geteway to connect to the lambda. 
 
-```json
-version: "2.1"
-
-services:
-  localstack:
-    image: localstack/localstack:latest
-    environment:
-      - "SERVICES=${LOCALSTACK_SERVICES:-es,s3,lambda}"
-      - "DEFAULT_REGION=${AWS_REGION:-us-east-1}"
-      - "HOSTNAME=${LOCALSTACK_HOSTNAME:-localhost}"
-      - "HOSTNAME_EXTERNAL=${LOCALSTACK_HOSTNAME_EXTERNAL:-localhost}"
-      - "USE_SSL=false"
-    volumes:
-      - ./templates:/opt/bootstrap/templates
-    ports:
-      - "4567-4582:4567-4582"
-      - "8080:8080"
+```
+docker run --name $docker_name -d \
+    -e LAMBDA_EXECUTOR=docker \
+    -e DOCKER_HOST=unix:///var/run/docker.sock \
+    -e SERVICES=cloudformation,s3,sts,lambda,cloudwatch \
+    -e DEBUG=1 \
+    -p 443:443 \
+    -p 4567-4596:4567-4596 \
+    -p 8080:8080 \
+    -v $PWD:$PWD \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /tmp/localstack:/tmp/localstack \
+    localstack/localstack:latest
 ```
 
-### Start docker compose
-From inside your project directory that you created:
+### Check docker logs to verify the service has started
 ```
-docker-compose up
-```
-
-It should start up successfully and be ready:
-```
-...
-localstack_1  | Waiting for all LocalStack services to be ready
-localstack_1  | Waiting for all LocalStack services to be ready
-localstack_1  | Ready.
+docker ps
+docker logs CONTAINER_ID
 ```
 
 ### Look at what infra has been created
@@ -132,6 +120,8 @@ You should see the newly added document.
 http://localhost:4571/workspace/
 ```
 
+## Lambda configuration
+### Create a role 
 
 ### References
 https://lobster1234.github.io/2017/04/05/working-with-localstack-command-line/
