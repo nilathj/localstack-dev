@@ -12,8 +12,8 @@ If you had previously installed the aws cli using the bundled installer, you can
 https://docs.aws.amazon.com/cli/latest/userguide/install-bundle.html#install-bundle-uninstall
 Then you can reinstall the latest using pip.
 
-### Install docker and docker-compose
-https://docs.docker.com/compose/install/
+### Install docker
+https://docs.docker.com/install/
 
 ### Install awslocal
 https://github.com/localstack/awscli-local
@@ -37,10 +37,15 @@ docker run --name $docker_name -d \
     localstack/localstack:latest
 ```
 
-### Check docker logs to verify the service has started
+Start local lambda python 3.7 docker container.  This container will be used by localstack to run your python 3.7 lambda.
+```
+docker run -v "$PWD":/var/task lambci/lambda:python3.7
+```
+
+### Check docker logs to verify the two containers have started
 ```
 docker ps
-docker logs CONTAINER_ID
+docker logs CONTAINER_ID (for localstack and lambci/lambda)
 ```
 
 ### Look at what infra has been created
@@ -122,6 +127,29 @@ http://localhost:4571/workspace/
 
 ## Lambda configuration
 ### Create a role 
+Create a new role that the lambda can use.  Create a file basic_lambda_role.json
+```
+{
+    "Version": "2019-04-17",
+    "Statement": [{
+        "Effect": "Allow",
+        "Principal": { "AWS" : "*" },
+        "Action": "sts:AssumeRole"
+    }]
+}
+```
+Load the lambda
+```
+awslocal iam create-role --role-name basic_lambda_role --assume-role-policy-document file://basic_lambda_role.json
+```
+
+### Create lambda
+```
+awslocal lambda create-function --function-name search_suggest --zip-file fileb://search-suggest.zip --handler search_suggest.lambda_handler --runtime python3.7 --role basic_lambda_role 
+```
+
+### Test lambda
+awslocal lambda  invoke --function-name pexa_search_suggest --payload fileb://event_suggest.json outputfile.txt
 
 ### References
 https://lobster1234.github.io/2017/04/05/working-with-localstack-command-line/
