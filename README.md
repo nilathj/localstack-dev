@@ -149,7 +149,16 @@ awslocal lambda create-function --function-name search_suggest --zip-file fileb:
 ```
 
 ### Test lambda
+```
 awslocal lambda  invoke --function-name pexa_search_suggest --payload fileb://event_suggest.json outputfile.txt
+```
+
+## API Gateway
+Createa an API gateway to trigger the lambda.
+```
+awslocal apigateway create-rest-api --name SearchOperations
+```
+
 
 ### References
 https://lobster1234.github.io/2017/04/05/working-with-localstack-command-line/
