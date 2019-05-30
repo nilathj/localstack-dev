@@ -51,7 +51,7 @@ What I had to do was ssh into localstack, and use ifconfig to get the localstack
 docker exec -it localstack /bin/bash
 ifconfig
 ```
-NB. If your localstack stack up address is different to 172.17.0.2, then you will need to change the ip address specified in the lambdas.
+NB. If your localstack ip address is different to 172.17.0.2, then you will need to change the ip address specified in the lambdas.
 
 
 ### Look at what infra has been created
