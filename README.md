@@ -1,7 +1,5 @@
 # localstack-dev
-How to start using localstack for local aws development
-
-[LocalStack](https://github.com/localstack/localstack) lets you to easily develop and more inportantly, contineously test aws services based application, all on your local pc without needing access to the AWS cloud infrastructure.  I wanted to make a set of notes that came in handy for me, when I started this journey, developing and testing applicaitons locally that use AWS services.
+[LocalStack](https://github.com/localstack/localstack) lets you to easily develop and more importantly, contineously test aws services based applications, all on your local docker without needing access to the AWS cloud infrastructure.  I wanted to make a set of notes that came in handy for me, as I didn't find much documentation to to setup and use localstack.
 
 ## Steps
 ### Install the latest python3 and aws cli using pip. 
@@ -12,44 +10,52 @@ If you had previously installed the aws cli using the bundled installer, you can
 https://docs.aws.amazon.com/cli/latest/userguide/install-bundle.html#install-bundle-uninstall
 Then you can reinstall the latest using pip.
 
+## Prerequisite
+Make sure these components are installed.
+
 ### Install docker
-https://docs.docker.com/install/
+[Docker for mac](https://docs.docker.com/docker-for-mac/install/)
+
+### Install aws cli using pip3
+[aws cli](https://docs.aws.amazon.com/cli/latest/userguide/install-macos.html)
+Make sure you install aws cli using pip3 instructions from the middle of the page in the above link.
+aws needs to be in you path.
 
 ### Install awslocal
-https://github.com/localstack/awscli-local
+[awslocal](https://github.com/localstack/awscli-local)
 This is a handy tool that will let you use awslocal directly to hit the local instance rather than having to specify --endpoint local urls.
 
-### Create a new directory for your project and start localstack using docker.  
-You can define the AWS services that you want started when docker localstack starts up.  In this excersise, I'm going to build and Elasticsearch instance, with a lambda for searching.  The lambda requires the creation of an IAM role and I'm going to use the API geteway to connect to the lambda. 
-
+### Install jq JSON parse used in the run script 
+[jq](https://stedolan.github.io/jq/) - command-line JSON processor
 ```
-docker run --name $docker_name -d \
-    -e LAMBDA_EXECUTOR=docker \
-    -e DOCKER_HOST=unix:///var/run/docker.sock \
-    -e SERVICES=cloudformation,s3,sts,lambda,cloudwatch \
-    -e DEBUG=1 \
-    -p 443:443 \
-    -p 4567-4596:4567-4596 \
-    -p 8080:8080 \
-    -v $PWD:$PWD \
-    -v /var/run/docker.sock:/var/run/docker.sock \
-    -v /tmp/localstack:/tmp/localstack \
-    localstack/localstack:latest
+brew install jq
 ```
 
-Start local lambda python 3.7 docker container.  This container will be used by localstack to run your python 3.7 lambda.
+## Running the localstack setup script
+To create our localstack environment:
 ```
-docker run -v "$PWD":/var/task lambci/lambda:python3.7
+./create_localstack_env.sh
 ```
 
-### Check docker logs to verify the two containers have started
+### Check docker logs to verify image localstack/localstack:latest has started
 ```
 docker ps
-docker logs CONTAINER_ID (for localstack and lambci/lambda)
+docker logs CONTAINER_ID (to see the logs of localstack)
 ```
 
+### Verify internal IP address of localstack.
+I had a lot of issues with inter docker container communications inside localstack.  I was expecting that when I used localhost from a lambda running in one docker container, that I would have been able to connect to elastic search running on another container, all inside localstack. This turned out not to be the case.  Refer: https://github.com/localstack/localstack/issues/1277
+
+What I had to do was ssh into localstack, and use ifconfig to get the localstacks ip address:
+```
+docker exec -it localstack /bin/bash
+ifconfig
+```
+NB. If your localstack stack up address is different to 172.17.0.2, then you will need to change the ip address specified in the lambdas.
+
+
 ### Look at what infra has been created
-http://localhost:8080/#/infra
+http://localhost:8081/#/infra
 This will open up your deployed resources console.  It will be empty.
 
 ### Create an Elasticsearch domain
