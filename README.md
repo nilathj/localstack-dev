@@ -6,6 +6,8 @@ We will use LocalStack using the AWS command line to create the infrastructure n
 ![LocalStack search architecture](/images/LocalStackSearch.png)
 We will create an elasticsearch instance, with documents indexed when a lambda is triggered to S3 insert.  The search lamdba is exposed to the user via the API gateway.  This lambda will query elasticsearch to retrieve matching documents.
 
+---
+
 ## Prerequisites
 Make sure these components are installed.
 
@@ -34,6 +36,9 @@ This is a handy tool that will let you use awslocal directly to hit the local in
 ```
 brew install jq
 ```
+
+---
+
 
 ## Running the localstack setup script
 To create our localstack environment:
@@ -67,6 +72,8 @@ ifconfig
 http://localhost:8081/#/infra
 This will open up your deployed resources console.  It should have 2 lambda functions (search-suggest and data-load), elasticsearch instance, S3.  It will not show the API gateway even though its configured to call the search-suggest lambda. 
 
+---
+
 ## Query search-suggest lambda via the API Gateway
 ```
 curl -X GET \
@@ -91,6 +98,7 @@ This will trigger the data load lambda on upload, which will index the document 
 awslocal s3 cp es/workspaces-1000-2000.json s3://localstack-search/
 ```
 
+---
 
 ### References
 https://lobster1234.github.io/2017/04/05/working-with-localstack-command-line/
