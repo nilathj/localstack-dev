@@ -1,4 +1,4 @@
-# localstack-dev
+# Using LocalStack for development
 [LocalStack](https://github.com/localstack/localstack) lets you to easily develop and more importantly, contineously test AWS services based applications, all on your local docker without needing access to the AWS cloud infrastructure.  I wanted to make a set of notes that came in handy for me, as I didn't find much documentation to to setup and use localstack.
 
 # Infrastructure setup using LocalStack
