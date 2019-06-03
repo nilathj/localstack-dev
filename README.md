@@ -4,9 +4,11 @@
 # Infrastructure setup using LocalStack
 We will use LocalStack using the AWS command line to create the infrastructure needed for a search api.  
 ![LocalStack search architecture](/images/LocalStackSearch.png)
-We will create an elasticsearch instance, with documents indexed when a lambda is triggered to S3 insert.  The search lamdba is exposed the the user via an API gateway.  This lambda will query elasticsearch to retrieve matching documents.
+We will create an elasticsearch instance, with documents indexed when a lambda is triggered to S3 insert.  The search lamdba is exposed to the user via the API gateway.  This lambda will query elasticsearch to retrieve matching documents.
 
-## Steps
+## Prerequisites
+Make sure these components are installed.
+
 ### Install the latest python3 and aws cli using pip. 
 https://docs.aws.amazon.com/cli/latest/userguide/install-macos.html
 Make sure you use python3 as the python 2.7 support will be deprecated soon and I found some strange python version errors when with aws tools when I was using the python 2.7 versions of the tools.
@@ -14,9 +16,6 @@ Make sure you use python3 as the python 2.7 support will be deprecated soon and 
 If you had previously installed the aws cli using the bundled installer, you can uninstal it using:
 https://docs.aws.amazon.com/cli/latest/userguide/install-bundle.html#install-bundle-uninstall
 Then you can reinstall the latest using pip.
-
-## Prerequisite
-Make sure these components are installed.
 
 ### Install docker
 [Docker for mac](https://docs.docker.com/docker-for-mac/install/)
