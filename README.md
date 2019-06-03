@@ -40,6 +40,11 @@ To create our localstack environment:
 ```
 ./create_localstack_env.sh
 ```
+After the scripts runs successfully, it will print out the API Gateway end point url to use, to hit the search-lambda.
+**NB.** The restapi id is **dynamic**, so everytime you create a new localstack environment, this id will change.
+```
+INFO: API_GATEWAY_SUGGEST_URL: http://localhost:4567/restapis/2790A-Z89004/test/_user_request_/suggest?q=high&workGroups=1086&subscriberId=4281
+```
 
 ### Check docker logs to verify image localstack/localstack:latest has started
 ```
@@ -55,118 +60,35 @@ What I had to do was ssh into localstack, and use ifconfig to get the localstack
 docker exec -it localstack /bin/bash
 ifconfig
 ```
-NB. If your localstack ip address is different to 172.17.0.2, then you will need to change the ip address specified in the lambdas.
+**NB.** If your localstack ip address is different to 172.17.0.2, then you will need to change the ip address specified in the lambdas.
 
 
 ### Look at what infra has been created
 http://localhost:8081/#/infra
-This will open up your deployed resources console.  It will be empty.
+This will open up your deployed resources console.  It should have 2 lambda functions (search-suggest and data-load), elasticsearch instance, S3.  It will not show the API gateway even though its configured to call the search-suggest lambda. 
 
-### Create an Elasticsearch domain
-Since we have defined that we will be using a "es" service in the docker-compose.yml above. We can now make use of it, by creating a domain called "workspace".
-
+## Query search-suggest lambda via the API Gateway
 ```
-awslocal es create-elasticsearch-domain --domain-name workspace
-```
-You will see a json output with the created DomainStatus: {}.  In this json response,  you can use the Endpoint value to hit ES. "Endpoint": "http://localhost:4571".
-
-If you refresh the web url. http://localhost:8080/#/infra
-You will see the Elasticsearch workspace.
-
-### Create a document json file called 26000001_1400000001
-```json
-{
-   "propertys":[
-      {
-         "lotInUnregisteredPlan": "Lot number 2",
-         "lvReportAddress": "222 Bourke St, Melbourne VIC 3000",
-         "landIdentifier":"333/885",
-         "id":124,
-         "address":"223 Bourke St, Melbourne VIC 3000"
-      },
-      {
-         "lotInUnregisteredPlan": "Lot number 1",
-         "lvReportAddress": "111 Bourke St, Melbourne VIC 3000",
-         "landIdentifier":"222/885",
-         "id":123,
-         "address":"112 Bourke St, Melbourne VIC 3000"
-      }
-   ],
-   "participant":{
-      "status":"ACTIVE",
-      "role":"Role1",
-      "id":1400000001,
-      "reference":"MY Reference",
-      "subscriberId":1111
-   },
-   "workspace":{
-      "status":"IN_PREPARATION",
-      "jurisdiction":"VIC",
-      "number":"no-20001",
-      "workgroups":[
-         123,
-         456,
-         678
-      ],
-      "id":26000001
-   },
-   "parties":[
-      {
-         "id":111,
-         "name":"Pary 1"
-      },
-      {
-         "id":112,
-         "name":"Party 2"
-      }
-   ]
-}
+curl -X GET \
+  'http://localhost:4567/restapis/2790A-Z89004/test/_user_request_/suggest?q=collins&workGroups=1086&subscriberId=4281' 
 ```
 
-### Upload the document into Elasticsearch domain for indexing
-Upload a document with id 26000001_1400000001 into workspace domain under doc.
+## Query ElasticSearch directly
+To list all documents in ElasticSearch
 ```
-curl -v -X POST -H "Content-Type: application/json" -d @26000001_1400000001.json http://localhost:4571/workspace/doc/26000001_1400000001
-```
-
-### See the document is in the ES index.
-You should see the newly added document.
-```
-http://localhost:4571/workspace/
+curl -X GET \
+  http://localhost:4571/_search \
 ```
 
-## Lambda configuration
-### Create a role 
-Create a new role that the lambda can use.  Create a file basic_lambda_role.json
+## List documents in S3
 ```
-{
-    "Version": "2019-04-17",
-    "Statement": [{
-        "Effect": "Allow",
-        "Principal": { "AWS" : "*" },
-        "Action": "sts:AssumeRole"
-    }]
-}
-```
-Load the lambda
-```
-awslocal iam create-role --role-name basic_lambda_role --assume-role-policy-document file://basic_lambda_role.json
+awslocal s3 ls s3://localstack-search/
 ```
 
-### Create lambda
+## Upload a document into S3
+This will trigger the data load lambda on upload, which will index the document contents into ElasticSearch.
 ```
-awslocal lambda create-function --function-name search_suggest --zip-file fileb://search-suggest.zip --handler search_suggest.lambda_handler --runtime python3.7 --role basic_lambda_role 
-```
-
-### Test lambda
-```
-awslocal lambda  invoke --function-name pexa_search_suggest --payload fileb://event_suggest.json outputfile.txt
-```
-
-## API Gateway
-Createa an API gateway to trigger the lambda.
-```
-awslocal apigateway create-rest-api --name SearchOperations
+awslocal s3 cp es/workspaces-1000-2000.json s3://localstack-search/
 ```
 
 
