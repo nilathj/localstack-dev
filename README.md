@@ -4,6 +4,7 @@
 # Infrastructure setup using LocalStack
 We will use LocalStack using the AWS command line to create the infrastructure needed for a search api.  
 ![LocalStack search architecture](/images/LocalStackSearch.png)
+We will create an elasticsearch instance, with documents indexed when a lambda is triggered to S3 insert.  The search lamdba is exposed the the user via an API gateway.  This lambda will query elasticsearch to retrieve matching documents.
 
 ## Steps
 ### Install the latest python3 and aws cli using pip. 
