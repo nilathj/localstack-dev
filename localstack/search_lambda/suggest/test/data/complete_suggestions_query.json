@@ -1,0 +1,178 @@
+{
+    "size": 10,
+    "from": 0,
+    "query": {
+        "bool": {
+            "filter": [
+                {
+                    "bool": {
+                        "should": [
+                            {
+                                "nested": {
+                                    "path": "propertys",
+                                    "query": {
+                                        "bool": {
+                                            "should": [
+                                                {
+                                                    "wildcard": {
+                                                        "propertys.address.keywordstring": "*12\\/5*"
+                                                    }
+                                                },
+                                                {
+                                                    "wildcard": {
+                                                        "propertys.landIdentifier.keywordstring": "*12\\/5*"
+                                                    }
+                                                },
+                                                {
+                                                    "wildcard": {
+                                                        "propertys.lotInUnregisteredPlan.keywordstring": "*12\\/5*"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "inner_hits": {
+                                        "_source": "false",
+                                        "highlight": {
+                                            "fields": {
+                                                "propertys.address.keywordstring": {
+                                                    "fragment_size": 150,
+                                                    "number_of_fragments": 10
+                                                },
+                                                "propertys.landIdentifier.keywordstring": {
+                                                    "fragment_size": 150,
+                                                    "number_of_fragments": 10
+                                                },
+                                                "propertys.lotInUnregisteredPlan.keywordstring": {
+                                                    "fragment_size": 150,
+                                                    "number_of_fragments": 10
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "nested": {
+                                    "path": "parties",
+                                    "query": {
+                                        "bool": {
+                                            "should": [
+                                                {
+                                                    "wildcard": {
+                                                        "parties.name.keywordstring": "*12\\/5*"
+                                                    }
+                                                },
+                                                {
+                                                    "wildcard": {
+                                                        "parties.titlePartyFullName.keywordstring": "*12\\/5*"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "inner_hits": {
+                                        "_source": "false",
+                                        "highlight": {
+                                            "fields": {
+                                                "parties.name.keywordstring": {
+                                                    "fragment_size": 150,
+                                                    "number_of_fragments": 10
+                                                },
+                                                "parties.titlePartyFullName.keywordstring": {
+                                                    "fragment_size": 150,
+                                                    "number_of_fragments": 10
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "bool": {
+                                    "should": [
+                                        {
+                                            "wildcard": {
+                                                "participant.reference.keywordstring": "*12\\/5*"
+                                            }
+                                        },
+                                        {
+                                            "wildcard": {
+                                                "workspace.number.keywordstring": "*12\\/5*"
+                                            }
+                                        },
+                                        {
+                                            "wildcard": {
+                                                "workspace.jurisdiction.keywordstring": "*12\\/5*"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "query_string": {
+                        "query": "NOT ABANDONED",
+                        "fields": [
+                            "workspace.status"
+                        ]
+                    }
+                },
+                {
+                    "query_string": {
+                        "query": "ACTIVE",
+                        "fields": [
+                            "participant.status"
+                        ]
+                    }
+                },
+                {
+                    "bool": {
+                        "should": [
+                            {
+                                "term": {
+                                    "workspace.workgroups": "55555"
+                                }
+                            },
+                            {
+                                "term": {
+                                    "workspace.workgroups": "1299"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "bool": {
+                        "should": [
+                            {
+                                "term": {
+                                    "participant.subscriberId": "55555"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    "_source": "false",
+    "highlight": {
+        "fields": {
+            "participant.reference.keywordstring": {
+                "fragment_size": 150,
+                "number_of_fragments": 10
+            },
+            "workspace.number.keywordstring": {
+                "fragment_size": 150,
+                "number_of_fragments": 10
+            },
+            "workspace.jurisdiction.keywordstring": {
+                "fragment_size": 150,
+                "number_of_fragments": 10
+            }
+        }
+    }
+}

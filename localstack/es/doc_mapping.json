@@ -1,0 +1,248 @@
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "created_date": {
+          "type": "date"
+        },
+        "schema_version": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "participant": {
+          "properties": {
+            "id": {
+              "type": "long"
+            },
+            "reference": {
+              "type": "text",
+              "fields": {
+                "keywordstring": {
+                  "type": "text",
+                  "analyzer": "keyword_analyzer"
+                },
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "analyzer": "standard"
+            },
+            "role": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "status": {
+              "type": "text",
+              "fields": {
+                "keywordstring": {
+                  "type": "text",
+                  "analyzer": "keyword_analyzer"
+                },
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "analyzer": "standard"
+            },
+            "subscriberId": {
+              "type": "long"
+            }
+          }
+        },
+        "parties": {
+          "type": "nested",
+          "properties": {
+            "id": {
+              "type": "long"
+            },
+            "name": {
+              "type": "text",
+              "fields": {
+                "keywordstring": {
+                  "type": "text",
+                  "analyzer": "keyword_analyzer"
+                },
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "analyzer": "standard"
+            },
+            "titlePartyFullName": {
+              "type": "text",
+              "fields": {
+                "keywordstring": {
+                  "type": "text",
+                  "analyzer": "keyword_analyzer"
+                },
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "analyzer": "standard"
+            },
+            "partySource": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "analyzer": "standard"
+            }
+          }
+        },
+        "propertys": {
+          "type": "nested",
+          "properties": {
+            "address": {
+              "type": "text",
+              "fields": {
+                "keywordstring": {
+                  "type": "text",
+                  "analyzer": "keyword_analyzer"
+                },
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "analyzer": "standard"
+            },
+            "id": {
+              "type": "long"
+            },
+            "landIdentifier": {
+              "type": "text",
+              "fields": {
+                "keywordstring": {
+                  "type": "text",
+                  "analyzer": "keyword_analyzer"
+                },
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "analyzer": "standard"
+            },
+            "lotInUnregisteredPlan": {
+              "type": "text",
+              "fields": {
+                "keywordstring": {
+                  "type": "text",
+                  "analyzer": "keyword_analyzer"
+                },
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "analyzer": "standard"
+            },
+            "lvReportAddress": {
+              "type": "text",
+              "fields": {
+                "keywordstring": {
+                  "type": "text",
+                  "analyzer": "keyword_analyzer"
+                },
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "analyzer": "standard"
+            }
+          }
+        },
+        "workspace": {
+          "properties": {
+            "id": {
+              "type": "long"
+            },
+            "jurisdiction": {
+              "type": "text",
+              "fields": {
+                "keywordstring": {
+                  "type": "text",
+                  "analyzer": "keyword_analyzer"
+                },
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "analyzer": "standard"
+            },
+            "number": {
+              "type": "text",
+              "fields": {
+                "keywordstring": {
+                  "type": "text",
+                  "analyzer": "keyword_analyzer"
+                },
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "analyzer": "standard"
+            },
+            "status": {
+              "type": "text",
+              "fields": {
+                "keywordstring": {
+                  "type": "text",
+                  "analyzer": "keyword_analyzer"
+                },
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "analyzer": "standard"
+            },
+            "workgroups": {
+              "type": "long"
+            }
+          }
+        }
+      }
+    }
+  },
+  "settings": {
+    "index": {
+      "analysis": {
+        "filter": {},
+        "analyzer": {
+          "keyword_analyzer": {
+            "filter": [
+              "lowercase",
+              "asciifolding",
+              "trim"
+            ],
+            "char_filter": [],
+            "type": "custom",
+            "tokenizer": "keyword"
+          }
+        }
+      }
+    }
+  }
+}

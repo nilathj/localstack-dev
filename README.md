@@ -2,7 +2,7 @@
 [LocalStack](https://github.com/localstack/localstack) lets you to easily develop and more importantly, contineously test AWS services based applications, all on your local docker without needing access to the AWS cloud infrastructure.  I wanted to make a set of notes that came in handy for me, as I didn't find much documentation to to setup and use localstack.
 
 # Infrastructure setup using LocalStack
-We will use LocalStack using the AWS command line to create the infrastructure needed for a search api.  
+We will use LocalStack using the AWS command line to create the infrastructure needed for a search api.
 ![LocalStack search architecture](/images/LocalStackSearch.png)
 We will create an elasticsearch instance, with documents indexed when a lambda is triggered to S3 insert.  The search lamdba is exposed to the user via the API gateway.  This lambda will query elasticsearch to retrieve matching documents.
 
@@ -11,7 +11,7 @@ We will create an elasticsearch instance, with documents indexed when a lambda i
 ## Prerequisites
 Make sure these components are installed.
 
-### Install the latest python3 and aws cli using pip. 
+### Install the latest python3 and aws cli using pip.
 https://docs.aws.amazon.com/cli/latest/userguide/install-macos.html
 Make sure you use python3 as the python 2.7 support will be deprecated soon and I found some strange python version errors when with aws tools when I was using the python 2.7 versions of the tools.
 
@@ -31,7 +31,7 @@ aws needs to be in you path.
 [awslocal](https://github.com/localstack/awscli-local)
 This is a handy tool that will let you use awslocal directly to hit the local instance rather than having to specify --endpoint local urls.
 
-### Install jq JSON parse used in the run script 
+### Install jq JSON parse used in the run script
 [jq](https://stedolan.github.io/jq/) - command-line JSON processor
 ```
 brew install jq
@@ -43,6 +43,7 @@ brew install jq
 ## Running the localstack setup script
 To create our localstack environment:
 ```
+cd localstack
 ./create_localstack_env.sh
 ```
 After the scripts runs successfully, it will print out the API Gateway end point url to use, to hit the search-lambda.
@@ -70,14 +71,37 @@ ifconfig
 
 ### Look at what infra has been created
 http://localhost:8081/#/infra
-This will open up your deployed resources console.  It should have 2 lambda functions (search-suggest and data-load), elasticsearch instance, S3.  It will not show the API gateway even though its configured to call the search-suggest lambda. 
+This will open up your deployed resources console.  It should have 2 lambda functions (search-suggest and data-load), elasticsearch instance, S3.  It will not show the API gateway even though its configured to call the search-suggest lambda.
 
 ---
 
 ## Query search-suggest lambda via the API Gateway
+Make sure you replace the restapiId below with what gets printed out at the end of the script run.
 ```
 curl -X GET \
-  'http://localhost:4567/restapis/2790A-Z89004/test/_user_request_/suggest?q=collins&workGroups=1086&subscriberId=4281' 
+  'http://localhost:4567/restapis/2790A-Z89004/test/_user_request_/suggest?q=melbourne&workGroups=1086&subscriberId=4281'
+```
+Will give you a results:
+```
+{
+    "results": [
+        {
+            "address": [
+                "<em>123 Collins St Melbourne VIC 3000</em>"
+            ]
+        },
+        {
+            "address": [
+                "<em>125 Flinders St Melbourne VIC 3000</em>"
+            ]
+        },
+        {
+            "address": [
+                "<em>124 Bourke St Melbourne VIC 3000</em>"
+            ]
+        }
+    ]
+}
 ```
 
 ## Query ElasticSearch directly
@@ -102,4 +126,3 @@ awslocal s3 cp es/workspaces-1000-2000.json s3://localstack-search/
 
 ### References
 https://lobster1234.github.io/2017/04/05/working-with-localstack-command-line/
-

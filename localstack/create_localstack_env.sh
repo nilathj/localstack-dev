@@ -72,25 +72,25 @@ start_docker() {
 
 create_es() {
     awslocal es create-elasticsearch-domain --domain-name workspace --region ${REGION}
-    curl -sS -X PUT -H "Content-Type: application/json" -d @../es/doc_mapping.json http://localhost:4571/workspace
+    curl -sS -X PUT -H "Content-Type: application/json" -d @es/doc_mapping.json http://localhost:4571/workspace
     # The workspace json files are uploaded to ES by S3 triggering.  You can use this cmd to load them manually.
     # curl -sS -X POST -H "Content-Type: application/json" -d @../es/26000000_1400000000.json http://localhost:4571/workspace/doc/26000000_1400000000
 
     # Create a role for the lambda to use
-    awslocal iam create-role --role-name basic_lambda_role --assume-role-policy-document file://../lambda/basic_lambda_role.json
+    awslocal iam create-role --role-name basic_lambda_role --assume-role-policy-document file://iam/basic_lambda_role.json
 }
 
 # --------------------Search Suggest-------------------------
 create_search_suggest_archive() {
     # Build suggest lambda
-    cd ../../search_lambda/suggest
-    zip -FSr9 search-suggest.zip * -x "bin/*" -x "test/*" -x "README.md" -x "event_suggest.json"
+    cd search_lambda/suggest
+    zip -FSr9 bin/search-suggest.zip * -x "bin/*" -x "test/*" -x "README.md" -x "event_suggest.json"
 
     # Create suggest lambda in localstack
-    awslocal lambda create-function --function-name search_suggest --zip-file fileb://search-suggest.zip --handler search_suggest.lambda_handler --runtime python3.7 --role basic_lambda_role --region ${REGION}
+    awslocal lambda create-function --function-name search_suggest --zip-file fileb://bin/search-suggest.zip --handler search_suggest.lambda_handler --runtime python3.7 --role basic_lambda_role --region ${REGION}
 
     # Verify search suggest lambda is available
-    if ! awslocal lambda  invoke --function-name search_suggest --payload fileb://event_suggest.json outputfile.txt | grep -q '200'; then
+    if ! awslocal lambda  invoke --function-name search_suggest --payload fileb://event_suggest.json bin/outputfile.txt | grep -q '200'; then
       echo "Unable to invoke search suggest lambda"
       exit 1
     fi
@@ -101,8 +101,8 @@ create_data_load_archive() {
     LAMBDA_DIR="${2}"
     LAMBDA_FUNCTION_NAME="${3}"
     cd "${LAMBDA_DIR}/${LAMBDA_FUNCTION_NAME}"
-    cp *.py ../../doc/scripts/virtualenvs/ve-search/lib/python3.7/site-packages/
-    cd ../../doc/scripts/virtualenvs/ve-search/lib/python3.7/site-packages/
+    cp *.py bin/virtualenvs/ve-dataload/lib/python3.7/site-packages/
+    cd bin/virtualenvs/ve-dataload/lib/python3.7/site-packages/
     zip -FSr9 search-${LAMBDA_FUNCTION_NAME}.zip * -x "urllib3-*" -x "requests-2*" -x "elasticsearch5*" -x "elasticsearch-6*" -x "setuptools*" -x "pip*" -x "bin*" -x "setuptools/*" -x "pkg_resources/*"
     log::info "Current working Directory - $(pwd)"
 
@@ -110,7 +110,7 @@ create_data_load_archive() {
     awslocal lambda create-function --function-name search_data_load --zip-file fileb://search-data_load.zip --handler data_load.lambda_handler --runtime python3.7 --role basic_lambda_role --region ${REGION}
 
     # Verify dataload lambda is available
-    #if ! awslocal lambda  invoke --function-name search_data_load --payload fileb://event_suggest.json outputfile.txt | grep -q '200'; then
+    #if ! awslocal lambda  invoke --function-name search_data_load --payload fileb://event_suggest.json bin/outputfile.txt | grep -q '200'; then
     #  echo "Unable to invoke search suggest lambda"
     #  exit 1
     #fi
@@ -185,47 +185,6 @@ create_api_gateway_suggest_config() {
     echo ${PARENT_ID}
 }
 
-#===========================================Api Gateway for query===========================
-create_api_gateway_query_config() {
-    #$REST_API_ID is passed in
-    #$PARENT_ID is passed in
-    # Create resource - query
-    RESOURCE_ID_QUERY=$(awslocal apigateway create-resource --rest-api-id $1 --path-part query --parent-id $2 --region ${REGION} | jq -r '.id')
-
-    # Create GET method on resouce
-    RESOURCE_METHOD_QUERY=$(awslocal apigateway put-method --rest-api-id $1 --resource-id ${RESOURCE_ID_QUERY} --http-method GET --authorization-type NONE --region ${REGION} | jq -r '.httpMethod')
-
-    # Set lambda function as the destination for the GET method:
-    API_GATEWAY_QUERY=$(awslocal apigateway put-integration --rest-api-id $1 --resource-id ${RESOURCE_ID_QUERY} \
-    --region ${REGION} \
-    --http-method GET --type AWS_PROXY --integration-http-method POST \
-    --uri arn:aws:apigateway:${REGION}:lambda:path/functions/arn:aws:lambda:${REGION}:000000000000:function:search_query \
-    --passthrough-behavior WHEN_NO_MATCH \
-    --endpoint-url=http://localhost:4567)
-
-    # Set response of api to JSON
-    API_RESPONSE_STATUS_QUERY=$(awslocal apigateway put-method-response --rest-api-id $1 \
-    --region ${REGION} \
-    --resource-id ${RESOURCE_ID_QUERY} --http-method GET \
-    --status-code 200 --response-models application/json=Empty | jq -r '.statusCode')
-    if [[ "${API_RESPONSE_STATUS_QUERY}" != "200" ]]
-    then
-        log::error "FATAL: Unable to set response type of suggest api gateway: ${API_RESPONSE_STATUS_QUERY}"
-        exit 1
-    fi
-
-    # Set response of lambda fn to JSON
-    LAMBDA_RESPONSE_STATUS_QUERY=$(awslocal apigateway put-integration-response --rest-api-id $1 \
-    --region ${REGION} \
-    --resource-id $RESOURCE_ID_QUERY --http-method GET \
-    --status-code 200 --response-templates application/json="" | jq -r '.statusCode')
-    if [[ "${LAMBDA_RESPONSE_STATUS_QUERY}" != "200" ]]
-    then
-        log::error "FATAL: Unable to set response type of suggest lambda: ${LAMBDA_RESPONSE_STATUS_QUERY}"
-        exit 1
-    fi
-}
-
 deploy_test_api_gateway() {
     #$REST_API_ID is passed in
     # Deploy the api gateway:
@@ -236,20 +195,12 @@ deploy_test_api_gateway() {
     API_GATEWAY_SUGGEST_RESP=$(curl -sS ${API_GATEWAY_SUGGEST_URL})
     log::info "API_GATEWAY_SUGGEST_URL: ${API_GATEWAY_SUGGEST_URL}"
     #log::info "API_GATEWAY_SUGGEST_RESP: ${API_GATEWAY_SUGGEST_RESP}"
-
-    # Test query api gateway endpoint.
-    API_GATEWAY_QUERY_URL="http://localhost:4567/restapis/$1/test/_user_request_/query?q=high&q_type=address&workGroups=1086&subscriberId=4281"
-    API_GATEWAY_QUERY_RESP=$(curl -sS ${API_GATEWAY_QUERY_URL})
-    log::info "API_GATEWAY_QUERY_URL: ${API_GATEWAY_QUERY_URL}"
-    #log::info "API_GATEWAY_QUERY_RESP: ${API_GATEWAY_QUERY_RESP}"
-
-    log::info "Add -Dcore.es.alb.url=http://localhost:4567/restapis/$1/test/_user_request_ to the VM Options of your jboss run target in intellij."
 }
 
 function create_data_load_s3() {
     awslocal s3api create-bucket --bucket localstack-search --region ${REGION}
-    awslocal s3api put-bucket-notification-configuration --bucket localstack-search --region ${REGION} --notification-configuration file://../lambda/s3_notification.json
-    awslocal s3 cp ../es/workspaces-18878-18978_2019-05-08105559.txt s3://localstack-search/
+    awslocal s3api put-bucket-notification-configuration --bucket localstack-search --region ${REGION} --notification-configuration file://s3/obj_created_trigger.json
+    awslocal s3 cp es/workspaces-10000-10002.txt s3://localstack-search/
 }
 
 function error() {
@@ -264,15 +215,13 @@ trap 'error ${LINENO} ${?}' ERR
 #Main
 check_dependencies
 kill_docker
+install_python_modules "${root_dir}/search_lambda/data_load/bin/virtualenvs/ve-dataload" "${root_dir}/search_lambda/data_load/requirements/requirements.in"
 exit_on_error
-install_python_modules "virtualenvs/ve-search" "${root_dir}/../../requirements/requirements.in"
 start_docker
 create_es
 create_search_suggest_archive
-create_search_query_archive
-create_data_load_archive "${root_dir}" "${root_dir}/../../search_lambda" "data_load"
+create_data_load_archive "${root_dir}" "${root_dir}/search_lambda" "data_load"
 REST_API_ID=$(create_rest_api)
 PARENT_ID=$(create_api_gateway_suggest_config "$REST_API_ID")
-create_api_gateway_query_config "$REST_API_ID" "$PARENT_ID"
 deploy_test_api_gateway "$REST_API_ID"
 create_data_load_s3
